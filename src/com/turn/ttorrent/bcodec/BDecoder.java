@@ -15,10 +15,19 @@
 
 package com.turn.ttorrent.bcodec;
 
+import com.turn.ttorrent.client.AnnounceReponseFactory;
+import com.turn.ttorrent.client.AnnounceResponse;
+import com.turn.ttorrent.client.AnnounceResponsePeerFactory;
+import com.turn.ttorrent.common.Torrent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.EOFException;
 import java.math.BigInteger;
+import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
@@ -76,6 +85,61 @@ public class BDecoder {
 		return new BDecoder(in).bdecode();
 	}
 
+    public static AnnounceResponse convert(InputStream in) throws IOException {
+        Map<String, BEValue> answer = (Map<String, BEValue>) bdecode(in);
+        AnnounceResponse ret = AnnounceReponseFactory.create(answer.get("interval").getInt());
+        //
+        if (!answer.containsKey("peers")) {
+            // No peers returned by the tracker. Apparently we're alone on
+            // this one for now.
+            return ret;
+        }
+
+        try {
+            List<BEValue> peers = answer.get("peers").getList();
+            logger.debug("Got tracker response with {} peer(s).",
+                    peers.size());
+            for (BEValue peerInfo : peers) {
+                Map<String, BEValue> info = peerInfo.getMap();
+
+                try {
+                    byte[] peerId = info.get("peer id").getBytes();
+                    String ip = new String(info.get("ip").getBytes(),
+                            Torrent.BYTE_ENCODING);
+                    int port = info.get("port").getInt();
+                    ret.getPeers().add(AnnounceResponsePeerFactory.create(peerId, ip, port));
+                } catch (NullPointerException npe) {
+                    logger.warn("Missing field from peer " +
+                            "information in tracker response!");
+                }
+            }
+        } catch (InvalidBEncodingException ibee) {
+            byte[] data = answer.get("peers").getBytes();
+            int nPeers = data.length / 6;
+            if (data.length % 6 != 0) {
+                throw new InvalidBEncodingException("Invalid peers " +
+                        "binary information string!");
+            }
+
+            ByteBuffer peers = ByteBuffer.wrap(data);
+            logger.debug("Got compact tracker response with {} peer(s).",
+                    nPeers);
+
+            for (int i = 0; i < nPeers; i++) {
+                byte[] ipBytes = new byte[4];
+                peers.get(ipBytes);
+                String ip = InetAddress.getByAddress(ipBytes)
+                        .getHostAddress();
+                int port = (0xFF & (int) peers.get()) << 8
+                        | (0xFF & (int) peers.get());
+                ret.getPeers().add(AnnounceResponsePeerFactory.create(ipBytes, ip, port));
+            }
+        }
+
+        return ret;
+    }
+
+
 	/** Returns what the next bencoded object will be on the stream or -1
 	 * when the end of stream has been reached.
 	 *
@@ -111,7 +175,7 @@ public class BDecoder {
 			return this.bdecodeMap();
 		else
 			throw new InvalidBEncodingException
-				("Unknown indicator '" + this.indicator + "'");
+				("Unknown indicator '" + this.indicator + '\'');
 	}
 
 	/** Returns the next bencoded value on the stream and makes sure it is a
@@ -125,7 +189,7 @@ public class BDecoder {
 		int num = c - '0';
 		if (num < 0 || num > 9)
 			throw new InvalidBEncodingException("Number expected, not '"
-					+ (char)c + "'");
+					+ (char)c + '\'');
 		this.indicator = 0;
 
 		c = this.read();
@@ -140,7 +204,7 @@ public class BDecoder {
 
 		if (c != ':')
 			throw new InvalidBEncodingException("Colon expected, not '"
-					+ (char)c + "'");
+					+ (char)c + '\'');
 
 		return new BEValue(read(num));
 	}
@@ -154,7 +218,7 @@ public class BDecoder {
 		int c = this.getNextIndicator();
 		if (c != 'i')
 			throw new InvalidBEncodingException("Expected 'i', not '"
-					+ (char)c + "'");
+					+ (char)c + '\'');
 		this.indicator = 0;
 
 		c = this.read();
@@ -165,7 +229,7 @@ public class BDecoder {
 				return new BEValue(BigInteger.ZERO);
 			else
 				throw new InvalidBEncodingException("'e' expected after zero,"
-						+ " not '" + (char)c + "'");
+						+ " not '" + (char)c + '\'');
 		}
 
 		// We don't support more the 255 char big integers
@@ -183,7 +247,7 @@ public class BDecoder {
 
 		if (c < '1' || c > '9')
 			throw new InvalidBEncodingException("Invalid Integer start '"
-					+ (char)c + "'");
+					+ (char)c + '\'');
 		chars[off] = (char)c;
 		off++;
 
@@ -213,7 +277,7 @@ public class BDecoder {
 		int c = this.getNextIndicator();
 		if (c != 'l')
 			throw new InvalidBEncodingException("Expected 'l', not '"
-					+ (char)c + "'");
+					+ (char)c + '\'');
 		this.indicator = 0;
 
 		List<BEValue> result = new ArrayList<BEValue>();
@@ -237,7 +301,7 @@ public class BDecoder {
 		int c = this.getNextIndicator();
 		if (c != 'd')
 			throw new InvalidBEncodingException("Expected 'd', not '"
-					+ (char)c + "'");
+					+ (char)c + '\'');
 		this.indicator = 0;
 
 		Map<String, BEValue> result = new HashMap<String, BEValue>();
@@ -289,4 +353,7 @@ public class BDecoder {
 
 		return result;
 	}
+
+    private static final Logger logger =
+		LoggerFactory.getLogger(BDecoder.class);
 }

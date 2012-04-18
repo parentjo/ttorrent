@@ -93,7 +93,7 @@ public class TrackerService implements Container {
 		}
 	};
 
-	/** Create a new TrackerService serving the given torrents.
+    /** Create a new TrackerService serving the given torrents.
 	 *
 	 * @param torrents The torrents this TrackerService should serve requests
 	 * for.

@@ -73,10 +73,10 @@ public class TrackedPeer extends Peer {
 		UNKNOWN,
 		STARTED,
 		COMPLETED,
-		STOPPED;
-	};
+		STOPPED
+    }
 
-	private PeerState state;
+    private PeerState state;
 	private Date lastAnnounce;
 
 	/** Instanciate a new tracked peer for the given torrent.

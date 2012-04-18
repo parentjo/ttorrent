@@ -100,10 +100,10 @@ public class Client extends Observable implements Runnable,
 		SHARING,
 		SEEDING,
 		ERROR,
-		DONE;
-	};
+		DONE
+    }
 
-	private static final String BITTORRENT_ID_PREFIX = "-TO0042-";
+    private static final String BITTORRENT_ID_PREFIX = "-TO0042-";
 
 	private SharedTorrent torrent;
 	private ClientState state;
@@ -219,7 +219,7 @@ public class Client extends Observable implements Runnable,
 			this.thread = new Thread(this);
 			this.thread.setName("bt-client(.." +
 					this.hexId.substring(this.hexId.length()-6)
-					.toUpperCase() + ")");
+					.toUpperCase() + ')');
 			this.thread.start();
 		}
 	}
@@ -510,7 +510,7 @@ public class Client extends Observable implements Runnable,
 				this.getPeerRateComparator());
 		bound.addAll(this.connected.values());
 
-		if (bound.size() == 0) {
+		if (bound.isEmpty()) {
 			logger.trace("No connected peers, skipping unchoking.");
 			return;
 		} else {
@@ -541,7 +541,7 @@ public class Client extends Observable implements Runnable,
 
 		// Actually choke all chosen peers (if any), except the eventual
 		// optimistic unchoke.
-		if (choked.size() > 0) {
+		if (!choked.isEmpty()) {
 			SharingPeer randomPeer = choked.toArray(
 					new SharingPeer[0])[this.random.nextInt(choked.size())];
 
@@ -568,65 +568,15 @@ public class Client extends Observable implements Runnable,
 	 * @param answer The B-decoded answer map.
 	 * @see <a href="http://wiki.theory.org/BitTorrentSpecification#Tracker_Response">BitTorrent tracker response specification</a>
 	 */
-	@Override
-	public void handleAnnounceResponse(Map<String, BEValue> answer) {
-		try {
-			if (!answer.containsKey("peers")) {
-				// No peers returned by the tracker. Apparently we're alone on
-				// this one for now.
-				return;
-			}
+	public void handleAnnounceResponse(AnnounceResponse answer) {
+        for (AnnounceReponsePeer announceReponsePeer : answer.getPeers()) {
+            processAnnouncedPeer(announceReponsePeer);
+        }
+    }
 
-			try {
-				List<BEValue> peers = answer.get("peers").getList();
-				logger.debug("Got tracker response with {} peer(s).",
-					peers.size());
-				for (BEValue peerInfo : peers) {
-					Map<String, BEValue> info = peerInfo.getMap();
-
-					try {
-						byte[] peerId = info.get("peer id").getBytes();
-						String ip = new String(info.get("ip").getBytes(),
-								Torrent.BYTE_ENCODING);
-						int port = info.get("port").getInt();
-						this.processAnnouncedPeer(peerId, ip, port);
-					} catch (NullPointerException npe) {
-						throw new ParseException("Missing field from peer " +
-								"information in tracker response!", 0);
-					}
-				}
-			} catch (InvalidBEncodingException ibee) {
-				byte[] data = answer.get("peers").getBytes();
-				int nPeers = data.length / 6;
-				if (data.length % 6 != 0) {
-					throw new InvalidBEncodingException("Invalid peers " +
-							"binary information string!");
-				}
-
-				ByteBuffer peers = ByteBuffer.wrap(data);
-				logger.debug("Got compact tracker response with {} peer(s).",
-					nPeers);
-
-				for (int i=0; i < nPeers ; i++) {
-					byte[] ipBytes = new byte[4];
-					peers.get(ipBytes);
-					String ip = InetAddress.getByAddress(ipBytes)
-						.getHostAddress();
-					int port = (0xFF & (int)peers.get()) << 8
-						| (0xFF & (int)peers.get());
-					this.processAnnouncedPeer(null, ip, port);
-				}
-			}
-		} catch (UnknownHostException uhe) {
-			logger.warn("Invalid compact tracker response!", uhe);
-		} catch (ParseException pe) {
-			logger.warn("Invalid tracker response!", pe);
-		} catch (InvalidBEncodingException ibee) {
-			logger.warn("Invalid tracker response!", ibee);
-		} catch (UnsupportedEncodingException uee) {
-			logger.error("{}", uee.getMessage(), uee);
-		}
-	}
+    private void processAnnouncedPeer(AnnounceReponsePeer announceReponsePeer) {
+        processAnnouncedPeer(announceReponsePeer.getPeerId(), announceReponsePeer.getIp(), announceReponsePeer.getPort());
+    }
 
 	/** Process a peer's information obtained in an announce reply.
 	 *
@@ -867,10 +817,10 @@ public class Client extends Observable implements Runnable,
 		public void run() {
 			this.client.stop();
 		}
-	};
+	}
 
 
-	/** Main client entry point for standalone operation.
+    /** Main client entry point for standalone operation.
 	 */
 	public static void main(String[] args) {
 		BasicConfigurator.configure(new ConsoleAppender(

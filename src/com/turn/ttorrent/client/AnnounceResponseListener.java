@@ -26,5 +26,5 @@ import java.util.Map;
  */
 public interface AnnounceResponseListener extends EventListener {
 
-	public void handleAnnounceResponse(Map<String, BEValue> answer);
+    public void handleAnnounceResponse(AnnounceResponse answer);
 }

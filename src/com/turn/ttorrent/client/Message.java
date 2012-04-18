@@ -74,9 +74,9 @@ public abstract class Message {
 			}
 			return null;
 		}
-	};
+	}
 
-	private Type type;
+    private Type type;
 	private ByteBuffer data;
 
 	private Message(Type type, ByteBuffer data) {
@@ -408,7 +408,7 @@ public abstract class Message {
 		}
 
 		public String toString() {
-			return super.toString() + " " + this.getBitfield().cardinality();
+			return super.toString() + ' ' + this.getBitfield().cardinality();
 		}
 	}
 
@@ -483,7 +483,7 @@ public abstract class Message {
 
 		public String toString() {
 			return super.toString() + " #" + this.getPiece() +
-				" (" + this.getLength() + "@" + this.getOffset() + ")";
+				" (" + this.getLength() + '@' + this.getOffset() + ')';
 		}
 	}
 
@@ -554,7 +554,7 @@ public abstract class Message {
 
 		public String toString() {
 			return super.toString() + " #" + this.getPiece() +
-				" (" + this.getBlock().capacity() + "@" + this.getOffset() + ")";
+				" (" + this.getBlock().capacity() + '@' + this.getOffset() + ')';
 		}
 	}
 
@@ -623,7 +623,7 @@ public abstract class Message {
 
 		public String toString() {
 			return super.toString() + " #" + this.getPiece() +
-				" (" + this.getLength() + "@" + this.getOffset() + ")";
+				" (" + this.getLength() + '@' + this.getOffset() + ')';
 		}
 	}
 }

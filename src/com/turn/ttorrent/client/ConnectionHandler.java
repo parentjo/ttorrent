@@ -223,7 +223,7 @@ public class ConnectionHandler implements Runnable {
 	 */
 	private String socketRepr(Socket s) {
 		return new StringBuilder(s.getInetAddress().getHostName())
-			.append(":").append(s.getPort()).toString();
+			.append(':').append(s.getPort()).toString();
 	}
 
 	/** Accept the next incoming connection.
@@ -338,14 +338,14 @@ public class ConnectionHandler implements Runnable {
 		if (!Arrays.equals(hs.getInfoHash(), this.torrent.getInfoHash())) {
 			throw new ParseException("Handshake for unknow torrent " +
 					Torrent.byteArrayToHexString(hs.getInfoHash()) +
-					" from " + this.socketRepr(socket) + ".", pstrlen + 9);
+					" from " + this.socketRepr(socket) + '.', pstrlen + 9);
 		}
 
 		if (peerId != null && !Arrays.equals(hs.getPeerId(), peerId)) {
 			throw new ParseException("Announced peer ID " +
 					Torrent.byteArrayToHexString(hs.getPeerId()) +
 					" did not match expected peer ID " +
-					Torrent.byteArrayToHexString(peerId) + ".", pstrlen + 29);
+					Torrent.byteArrayToHexString(peerId) + '.', pstrlen + 29);
 		}
 
 		return hs;

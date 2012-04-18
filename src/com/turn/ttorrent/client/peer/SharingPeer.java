@@ -335,7 +335,7 @@ public class SharingPeer extends Peer implements MessageListener {
 	}
 
 	public synchronized boolean isDownloading() {
-		return this.requests != null && this.requests.size() > 0;
+		return this.requests != null && !this.requests.isEmpty();
 	}
 
 	/** Request some more blocks from this peer.
@@ -680,10 +680,10 @@ public class SharingPeer extends Peer implements MessageListener {
 			.append(" [")
 			.append((this.choked ? "C" : "c"))
 			.append((this.interested ? "I" : "i"))
-			.append("|")
+			.append('|')
 			.append((this.choking ? "C" : "c"))
 			.append((this.interesting ? "I" : "i"))
-			.append("]")
+			.append(']')
 			.toString();
 	}
 }

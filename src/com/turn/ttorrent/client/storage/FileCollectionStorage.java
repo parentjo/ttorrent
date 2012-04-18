@@ -145,9 +145,9 @@ public class FileCollectionStorage implements TorrentByteStorage {
 			this.offset = offset;
 			this.length = length;
 		}
-	};
+	}
 
-	/** Select the group of files impacted by an operation.
+    /** Select the group of files impacted by an operation.
 	 *
 	 * <p>
 	 * This function selects which files are impacted by a read or write
@@ -192,7 +192,7 @@ public class FileCollectionStorage implements TorrentByteStorage {
 			bytes += size;
 		}
 
-		if (selected.size() == 0 || bytes < length) {
+		if (selected.isEmpty() || bytes < length) {
 			throw new IllegalStateException("Buffer underrun (only got " +
 				bytes + " out of " + length + " byte(s) requested)!");
 		}

@@ -103,13 +103,13 @@ public class Peer {
 	 */
 	public String toString() {
 		StringBuilder s = new StringBuilder("peer://")
-			.append(this.ip).append(":").append(this.port)
-			.append("/");
+			.append(this.ip).append(':').append(this.port)
+			.append('/');
 
 		if (this.hasPeerId()) {
 			s.append(this.hexPeerId.substring(this.hexPeerId.length()-6));
 		} else {
-			s.append("?");
+			s.append('?');
 		}
 
 		return s.toString();

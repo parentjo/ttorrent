@@ -45,6 +45,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import fr.cryptohash.SHA1;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.PatternLayout;
@@ -95,10 +96,10 @@ public class Torrent {
 			this.file = file;
 			this.size = size;
 		}
-	};
+	}
 
 
-	protected final byte[] encoded;
+    protected final byte[] encoded;
 	protected final byte[] encoded_info;
 	protected final Map<String, BEValue> decoded;
 	protected final Map<String, BEValue> decoded_info;
@@ -313,7 +314,7 @@ public class Torrent {
 	 */
 	public static String byteArrayToHexString(byte[] bytes) {
 		BigInteger bi = new BigInteger(1, bytes);
-		return String.format("%0" + (bytes.length << 1) + "X", bi);
+		return String.format("%0" + (bytes.length << 1) + 'X', bi);
 	}
 
 	/** Return an hexadecimal representation of the bytes contained in the
@@ -419,7 +420,12 @@ public class Torrent {
 	 */
 	public static Torrent create(File source, URL announce, String createdBy)
 		throws NoSuchAlgorithmException, InterruptedException, IOException {
-		return Torrent.create(source, null, announce, createdBy);
+		return Torrent.create(source, null, announce.toString(), createdBy);
+	}
+
+	public static Torrent create(File source, String announce, String createdBy, String comment)
+		throws NoSuchAlgorithmException, InterruptedException, IOException {
+		return Torrent.create(source, null, announce, createdBy, comment);
 	}
 
 	/** Create a {@link Torrent} object for a set of files.
@@ -441,6 +447,24 @@ public class Torrent {
 	public static Torrent create(File parent, List<File> files, URL announce,
 		String createdBy)
 		throws NoSuchAlgorithmException, InterruptedException, IOException {
+        return create(parent, files, announce.toString(), createdBy, "");
+    }
+
+    /**
+     * See {@link #create(java.io.File, java.net.URL, String)}
+     * @param parent
+     * @param files
+     * @param announce
+     * @param createdBy
+     * @param comment
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws InterruptedException
+     * @throws IOException
+     */
+	public static Torrent create(File parent, List<File> files, String announce,
+		String createdBy, String comment)
+		throws NoSuchAlgorithmException, InterruptedException, IOException {
 		if (files == null || files.isEmpty()) {
 			logger.info("Creating single-file torrent for {}...",
 				parent.getName());
@@ -450,8 +474,9 @@ public class Torrent {
 		}
 
 		Map<String, BEValue> torrent = new HashMap<String, BEValue>();
-		torrent.put("announce", new BEValue(announce.toString()));
+		torrent.put("announce", new BEValue(announce));
 		torrent.put("creation date", new BEValue(new Date().getTime()));
+		torrent.put("comment", new BEValue(comment));
 		torrent.put("created by", new BEValue(createdBy));
 
 		Map<String, BEValue> info = new TreeMap<String, BEValue>();
@@ -486,6 +511,13 @@ public class Torrent {
 				Torrent.BYTE_ENCODING));
 		}
 		torrent.put("info", new BEValue(info));
+
+        //
+/*        List<BEValue> trackerList = new LinkedList<BEValue>();
+        for (URL tracker : trackers) {
+            trackerList.add(new BEValue(tracker.toString()));
+        }
+        torrent.put("announce-list", new BEValue(trackerList));*/
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		BEncoder.bencode(new BEValue(torrent), baos);
